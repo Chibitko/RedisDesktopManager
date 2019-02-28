@@ -1,5 +1,6 @@
 #pragma once
 #include <QAbstractListModel>
+#include <QJSValue>
 #include <QSharedPointer>
 #include <QVariantMap>
 #include "common/baselistmodel.h"
@@ -26,6 +27,11 @@ class ValueViewModel : public BaseListModel {
   QSharedPointer<Model> model();
 
  public:
+  // general key operations
+  Q_INVOKABLE void renameKey(const QString& newKeyName, QJSValue jsCallback);
+  Q_INVOKABLE void setTTL(const QString& newTTL, QJSValue jsCallback);
+  Q_INVOKABLE void removeKey();
+
   // single row operations
   Q_INVOKABLE bool isRowLoaded(int i);
   Q_INVOKABLE void addRow(const QVariantMap& row);
@@ -47,6 +53,9 @@ class ValueViewModel : public BaseListModel {
   void totalRowCountChanged();
   void pageSizeChanged();
   void columnNamesChanged();
+  void keyRenamed();
+  void keyRemoved();
+  void keyTTLChanged();
 
  protected:
   int mapRowIndex(int i);

@@ -19,11 +19,17 @@ KeyItem::KeyItem(const QByteArray& fullPath, unsigned short dbIndex,
       m_parent(parent),
       m_removed(false) {
   m_eventHandlers.insert("click", [this]() {
-    if (isEnabled()) m_operations->openKeyTab(*this, false);
+    if (isEnabled()) {
+      auto self = qSharedPointerDynamicCast<KeyItem>(getSelf());
+      if (self) m_operations->openKeyTab(self, false);
+    }
   });
 
   m_eventHandlers.insert("mid-click", [this]() {
-    if (isEnabled()) m_operations->openKeyTab(*this, true);
+    if (isEnabled()) {
+      auto self = qSharedPointerDynamicCast<KeyItem>(getSelf());
+      if (self) m_operations->openKeyTab(self, true);
+    }
   });
 
   m_eventHandlers.insert("delete", [this]() {

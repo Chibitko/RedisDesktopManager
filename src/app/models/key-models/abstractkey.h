@@ -23,7 +23,7 @@ class KeyModel : public ValueEditor::Model {
         m_keyFullPath(fullPath),
         m_dbIndex(dbIndex),
         m_ttl(ttl),
-        m_rowCount(-1),
+        m_rowCount(0),
         m_isMultiRow(!rowsCountCmd.isEmpty()),
         m_rowsCountCmd(rowsCountCmd),
         m_rowsLoadCmd(rowsLoadCmd),
@@ -129,7 +129,7 @@ class KeyModel : public ValueEditor::Model {
   }
 
   virtual void loadRows(QVariant rowStart, unsigned long count,
-                        std::function<void(const QString&)> callback) override {
+                        std::function<void(const QString&, unsigned long)> callback) override {
     if (m_rowsLoadCmd.mid(1, 4).toLower() == "scan") {
       QList<QByteArray> cmdParts = m_rowsLoadCmd.split(' ');
       cmdParts.replace(cmdParts.indexOf("%1"), m_keyFullPath);
@@ -146,24 +146,25 @@ class KeyModel : public ValueEditor::Model {
 
               if (result.type() == QVariant::Type::List) {
                 try {
-                  addLoadedRowsToCache(result.toList(), rowStart);
+                  auto loadedRows = result.toList();
+                  addLoadedRowsToCache(loadedRows, rowStart);
+                  callback(QString(), loadedRows.size() / getColumnNames().size());
                 } catch (const std::runtime_error& e) {
-                  callback(QString(e.what()));
+                  callback(QString(e.what()), 0);
                 }
-              }
-              callback(QString());
+              }              
             });
       } catch (const RedisClient::Connection::Exception& e) {
-        callback(QString(e.what()));
+        callback(QString(e.what()), 0);
       }
     } else {
       getRowsRange(
           getRangeCmd(rowStart, count),
           [this, callback, rowStart](const QString& err, QVariantList result) {
-            if (!err.isEmpty()) return callback(err);
+            if (!err.isEmpty()) return callback(err, 0);
 
             addLoadedRowsToCache(result, rowStart);
-            callback(QString());
+            callback(QString(), result.size());
           });
     }
   }

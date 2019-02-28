@@ -1,10 +1,11 @@
 #include "valueviewmodel.h"
+#include <qredisclient/utils/text.h>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QSettings>
 
 ValueEditor::ValueViewModel::ValueViewModel(QSharedPointer<Model> model)
-    : BaseListModel((QObject*)model->getConnector().data()),
+    : BaseListModel(),
       m_model(model),
       m_startFramePosition(0),
       m_lastLoadedRowFrameSize(0) {}
@@ -29,6 +30,20 @@ QHash<int, QByteArray> ValueEditor::ValueViewModel::roleNames() const {
 QSharedPointer<ValueEditor::Model> ValueEditor::ValueViewModel::model() {
   return m_model;
 }
+
+void ValueEditor::ValueViewModel::renameKey(const QString& newKeyName,
+                                            QJSValue jsCallback) {
+  m_model->setKeyName(printableStringToBinary(newKeyName));
+  emit keyRenamed();
+}
+
+void ValueEditor::ValueViewModel::setTTL(const QString& newTTL,
+                                         QJSValue jsCallback) {
+  m_model->setTTL(newTTL.toLong());
+  emit keyTTLChanged();
+}
+
+void ValueEditor::ValueViewModel::removeKey() {}
 
 int ValueEditor::ValueViewModel::mapRowIndex(int i) {
   return m_startFramePosition + i;
@@ -84,20 +99,21 @@ void ValueEditor::ValueViewModel::loadRows(int start, int limit) {
 
   // NOTE(u_glide): Do so for proper rendering of QML table
   m_lastLoadedRowFrameSize = totalRowCount() - start;
-  m_model->loadRows(start, limit,
-                    [this, start, limit, loaded, msg](const QString& err) {
-                      if (!err.isEmpty()) {
-                        emit error(msg.arg(err));
-                        return;
-                      }
+  m_model->loadRows(
+      start, limit,
+      [this, start, msg](const QString& err, unsigned long rowsCount) {
+        if (!err.isEmpty()) {
+          emit error(msg.arg(err));
+          return;
+        }
 
-                      m_lastLoadedRowFrameSize = loaded;
-                      m_startFramePosition = start;
+        m_lastLoadedRowFrameSize = rowsCount;
+        m_startFramePosition = start;
 
-                      emit layoutAboutToBeChanged();
-                      emit rowsLoaded(start, loaded);
-                      emit layoutChanged();
-                    });
+        emit layoutAboutToBeChanged();
+        emit rowsLoaded(start, rowsCount);
+        emit layoutChanged();
+      });
 }
 
 void ValueEditor::ValueViewModel::addRow(const QVariantMap& row) {

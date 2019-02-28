@@ -13,8 +13,7 @@ class ModelSignals : public QObject {
   Q_OBJECT
  public:
   ModelSignals() {}
- signals:
-  void dataLoaded();
+ signals:  
   void removed();
   void error(const QString&);
 };
@@ -41,7 +40,7 @@ class Model : public QEnableSharedFromThis<Model> {
   virtual unsigned long rowsCount() = 0;
   virtual void loadRows(
       QVariant rowStart, unsigned long count,
-      std::function<void(const QString&)> callback) = 0;  // async
+      std::function<void(const QString&, unsigned long)> callback) = 0;  // async
   virtual void clearRowCache() = 0;
   virtual void removeRow(int) = 0;  // async
   virtual bool isRowLoaded(int) = 0;

@@ -172,7 +172,7 @@ QString TreeOperations::getNamespaceSeparator() {
 
 QString TreeOperations::defaultFilter() { return conf().keysPattern(); }
 
-void TreeOperations::openKeyTab(ConnectionsTree::KeyItem& key,
+void TreeOperations::openKeyTab(QSharedPointer<ConnectionsTree::KeyItem> key,
                                 bool openInNewTab) {
   emit m_events->openValueTab(m_connection, key, openInNewTab);
 }

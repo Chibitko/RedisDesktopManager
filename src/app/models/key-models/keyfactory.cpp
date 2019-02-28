@@ -81,15 +81,25 @@ void KeyFactory::loadKey(
   }
 }
 
-void KeyFactory::addKey(QSharedPointer<RedisClient::Connection> connection,
-                        QByteArray keyFullPath, int dbIndex, QString type,
-                        const QVariantMap& row) {
-  QSharedPointer<ValueEditor::Model> result =
-      createModel(type, connection, keyFullPath, dbIndex, -1);
+void KeyFactory::createNewKeyRequest(
+    QSharedPointer<RedisClient::Connection> connection,
+    std::function<void()> callback, int dbIndex, QString keyPrefix) {
+  if (connection.isNull() || dbIndex < 0) return;
+
+  emit newKeyDialog(NewKeyRequest(connection, dbIndex, callback, keyPrefix));
+}
+
+void KeyFactory::submitNewKeyRequest(NewKeyRequest r, QJSValue jsCallback) {
+  QSharedPointer<ValueEditor::Model> result = createModel(
+      r.keyType(), r.connection(), r.keyName().toUtf8(), r.dbIndex(), -1);
 
   if (!result) return;
 
-  result->addRow(row);
+  result->addRow(r.value());
+
+  r.callback();
+
+  if (jsCallback.isCallable()) jsCallback.call(QJSValueList{});
 }
 
 QSharedPointer<ValueEditor::Model> KeyFactory::createModel(

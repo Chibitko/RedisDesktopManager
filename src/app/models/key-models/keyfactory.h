@@ -1,6 +1,8 @@
 #pragma once
+#include <QJSValue>
 #include "exception.h"
 #include "modules/value-editor/abstractkeyfactory.h"
+#include "newkeyrequest.h"
 
 class KeyFactory : public QObject, public ValueEditor::AbstractKeyFactory {
   Q_OBJECT
@@ -13,9 +15,15 @@ class KeyFactory : public QObject, public ValueEditor::AbstractKeyFactory {
       std::function<void(QSharedPointer<ValueEditor::Model>, const QString &)>
           callback) override;
 
-  void addKey(QSharedPointer<RedisClient::Connection> connection,
-              QByteArray keyFullPath, int dbIndex, QString type,
-              const QVariantMap &row) override;
+ public slots:
+  void createNewKeyRequest(QSharedPointer<RedisClient::Connection> connection,
+                           std::function<void()> callback, int dbIndex,
+                           QString keyPrefix);
+
+  void submitNewKeyRequest(NewKeyRequest r, QJSValue jsCallback);
+
+ signals:
+  void newKeyDialog(NewKeyRequest r);
 
  private:
   QSharedPointer<ValueEditor::Model> createModel(

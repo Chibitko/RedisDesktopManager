@@ -49,28 +49,26 @@ void ReJSONKeyModel::updateRow(int rowIndex, const QVariantMap& row) {
 
   if (result.isOkMessage()) {
     m_rowsCache.clear();
-    m_rowsCache.addLoadedRange({0, 0}, (QList<QByteArray>() << value));
-    m_notifier->dataLoaded();
+    m_rowsCache.addLoadedRange({0, 0}, (QList<QByteArray>() << value));    
   }
 }
 
 void ReJSONKeyModel::addRow(const QVariantMap& row) { updateRow(0, row); }
 
 void ReJSONKeyModel::loadRows(QVariant, unsigned long,
-                              std::function<void(const QString&)> callback) {
+                              std::function<void(const QString&, unsigned long)> callback) {
   try {
     m_connection->command(
         {"JSON.GET", m_keyFullPath}, getConnector().data(),
         [this, callback](RedisClient::Response r, QString e) {
           if (r.getType() != RedisClient::Response::Bulk || !e.isEmpty()) {
-            return callback(QString("Cannot load value"));
+            return callback(QString("Cannot load value"), 0);
           }
 
           m_rowsCache.clear();
-          m_rowsCache.push_back(r.getValue().toByteArray());
-          m_notifier->dataLoaded();
+          m_rowsCache.push_back(r.getValue().toByteArray());          
 
-          callback(QString());
+          callback(QString(), 1);
         },
         m_dbIndex);
   } catch (const RedisClient::Connection::Exception& e) {

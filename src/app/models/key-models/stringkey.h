@@ -14,7 +14,7 @@ class StringKeyModel : public KeyModel<QByteArray> {
   void addRow(const QVariantMap&) override;
   virtual void updateRow(int rowIndex, const QVariantMap& row) override;
   void loadRows(QVariant, unsigned long,
-                std::function<void(const QString&)> callback) override;
+                std::function<void(const QString&, unsigned long)> callback) override;
   void removeRow(int) override;
 
  protected:
